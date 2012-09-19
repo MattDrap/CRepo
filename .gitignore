@@ -1,12 +1,241 @@
-# Compiled Object files
-*.slo
-*.lo
-*.o
 
-# Compiled Dynamic libraries
-*.so
+#include <conio.h>
+#include <iostream>
+#include <fstream>
+#include <time.h>
+#include <queue>
+#include <string>
 
-# Compiled Static libraries
-*.lai
-*.la
-*.a
+#define caX 99
+#define caY 29
+//backpole 29*166
+#define BpoleX 29
+#define BpoleY 166
+
+using std::queue;
+using std::cout;
+using std::endl;
+using std::cin;
+using std::ifstream;
+
+//PreDefinitions///////////////////////////////////////////////////////////////////////
+
+char postavahlava = 'O';            //☺
+char postavahorni[2]={'|','/'};  	//|/
+char postavadolni[2]={'L','L'};		//LL
+char strela = '>';
+int prubehx = 0,prubehy = 0;
+bool strila= false;
+
+char **pole = new char*[caY];
+int i,j,options;
+struct CoorXY {
+	int x;
+	int y;
+};
+CoorXY Coor,Coor2;
+char bpole[BpoleX][BpoleY];
+queue<int> fronta;
+
+//Methods//////////////////////////////////////////////////////////////////////////////
+
+int Quit()
+{
+	delete pole;
+	return 0;
+}
+//////////////////////////////////////////////////////
+ void Wait(double seconds)
+{
+  clock_t endwait;
+  endwait = clock () + seconds * CLOCKS_PER_SEC ;
+  while (clock() < endwait) {}
+}
+ /////////////////////////////////////////////////////
+ void CoutChar(char** pole)
+ {
+	pole[Coor.y][Coor.x] = postavahlava;
+	pole[Coor.y+1][Coor.x] = postavahorni[0];
+	pole[Coor.y+1][Coor.x+1] = postavahorni[1];
+	pole[Coor.y+2][Coor.x] = postavadolni[0];
+	pole[Coor.y+2][Coor.x+1] = postavadolni[1];
+}
+ ////////////////////////////////////////////////////
+ void CoutArray(char** carray)
+{
+	for (i=0;i<caY;i++){
+		for(j=0;j<caX;j++){
+			cout << carray[i][j];
+		}
+		cout << endl;
+	}
+}
+ ///////////////////////////
+void CoutArray(char** carray, int minusY,int minusX)
+{
+	for(i=0;i<caY-minusY;i++)
+	{
+		for(j=0;j<caX-minusX;j++)
+		{
+			cout << carray[i][j];
+		}
+		cout << endl;
+	}
+}
+////////////////////////////////////////////////////////
+ int Menu()
+ {
+  ifstream input2;
+  input2.open("Menu.dat");
+  input2 >> std::noskipws;
+  int inx = 0, iny = 0;
+  while(input2 >> pole[iny][inx])
+  {
+	inx++;
+	if(inx==99)
+	{
+		iny++;
+		inx=0;
+	}
+  }
+  input2.clear();
+  input2.close();
+  CoutArray(pole,19,0);
+  while(char menuc = _getch()){
+   switch(menuc)
+   {
+  case 'j': 
+	  return 0;
+	  break;
+  case 'q': 
+	  return 1;
+	  break;
+  default: break;
+   }
+  }
+ }
+ ////////////////////////////////////////////////////////////
+int Initialize()
+{
+	for(int z=0;z<caY;z++)pole[z] = new char[caX];
+	if(Menu()==1)return 1;
+	ifstream input;
+	for(int t=0;t < 29;t++){
+		for(int d=0;d < 166;d++){
+		bpole[t][d]=0;
+		}
+	}
+	int t=0,d=0;
+	input.open("Mapa1.dat");
+	while(input >> bpole[t][d]){
+		d++;
+		if(d==166){
+		t++;
+		d=0;
+		}
+	}
+	input.clear();
+	input.close();
+
+	Coor.x = 0;
+	Coor.y = 26;
+	Coor2.x = 0;
+	Coor2.y = 0;
+	return 0;
+}
+////////////////////////////////////////////////////////
+void ChangeArray(char **pole)
+{
+	for( i = (0 + Coor2.y); i < (caY+Coor2.y); i++){
+		for( j =( 0 + Coor2.x); j < (caX + Coor2.x); j++){
+			int pi = 0,pj = 0;
+			pi=i-Coor2.y; pj=j-Coor2.x;
+			pole[pi][pj] = bpole[i][j];
+		}
+	}
+	CoutChar(pole);
+}
+//////////////////////////////////////////////////////////
+int CheckArray(char **pole)
+{
+	if(postavahlava == pole[Coor.y][0]){return 2;}
+	if(postavahorni[1] == pole[Coor.y][caY]){return 3;}
+	if(Coor.x>55)Coor2.x++;
+	return 0;
+}
+///////////////////////////////////////////////////////////
+int KeyCatch()
+{
+	char c=0;
+	c = _getch();
+	switch(c){
+	case 'w':
+		break;
+	case 'a':
+		if(CheckArray(pole)!=2)Coor.x--;
+		break;
+	case 's':
+		break;
+	case 'd':
+		if(CheckArray(pole)!=3)Coor.x++;
+		break;
+	case 'h':
+		prubehx = Coor.x+2;
+		prubehy = Coor.y;
+		strila = true;
+		break;
+	case 'q':
+		return 1;
+		break;
+	}
+	return 0;
+}
+/////////////////////////////////////////////////
+void Shoot(bool strila){
+	if(strila && prubehx<=BpoleY){
+		prubehx++;
+		pole[prubehy+1][prubehx] = strela;
+	}
+	else
+	{
+	strila = false;
+	}
+}
+/////////////////////////////////////////////////
+void Clean(bool strila)
+{
+	if(strila&&pole[prubehy+1][prubehx]==strela){
+		pole[prubehy+1][prubehx-1]='-';
+	}
+}
+///////////////////////////////////////////////////////////
+int MainLoop(){
+	while(true)
+	{
+	ChangeArray(pole);
+	Shoot(strila);
+	CoutArray(pole);
+	if(KeyCatch()==1)
+	{
+		if(Menu()==1){
+		  Quit();
+		  return 0;
+		}
+	}
+	Wait(0.1);
+	system("cls");
+	Clean(strila);
+	}
+	Quit();
+	return 0;
+}
+///////////////////////////////////////////////////
+int main()
+{
+	if(Initialize()==1){
+		Quit();
+		return 0;
+	}
+	MainLoop();
+	return 0;
+}
